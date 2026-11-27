@@ -24,6 +24,7 @@ Discord hides these from people without the matching permission. Everything is l
 | Command | What it does |
 | --- | --- |
 | `/warn member reason` | DMs the member a warning from Cici |
+| `/dm member message` | Sends the member a private message from Cici, signed with the officer's name. Tells you if their DMs are closed |
 | `/timeout member minutes reason` | Mutes the member for 1 minute to 7 days |
 | `/purge count` | Deletes the last 1 to 100 messages in the channel (Discord only allows messages under 14 days old) |
 

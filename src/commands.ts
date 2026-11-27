@@ -26,8 +26,8 @@ const who = (i: CommandInteraction) => i.member.nick || i.member.user.global_nam
 const GOLD = 0xe3c06f
 const NAVY = 0x102e64
 const reply = (data: object, ephemeral = false) => ({ type: 4, data: { allowed_mentions: { parse: [] }, ...data, ...(ephemeral ? { flags: 64 } : {}) } })
-const SLOW = new Set(['status', 'menu', 'officers', 'idea', 'warn', 'timeout', 'purge'])
-const PRIVATE = new Set(['officers', 'idea', 'warn', 'timeout', 'purge'])
+const SLOW = new Set(['status', 'menu', 'officers', 'idea', 'warn', 'dm', 'timeout', 'purge'])
+const PRIVATE = new Set(['officers', 'idea', 'warn', 'dm', 'timeout', 'purge'])
 
 export const LINKS = [
   ['🌐 hamapps.dev', 'https://hamapps.dev'],
@@ -46,7 +46,7 @@ export const HELP = [
   '🎵 join **Lofi Lounge** and I\'ll play music',
   '',
   '**Officers**',
-  '`/warn` · `/timeout` · `/purge` (all logged in #mod-log)',
+  '`/warn` · `/dm` · `/timeout` · `/purge` (all logged in #mod-log)',
 ].join('\n')
 
 /** Answer now, or return the "thinking" reply for slow commands (then the Followup Lambda runs `slow`). */
@@ -113,6 +113,8 @@ async function run(i: CommandInteraction): Promise<object> {
       return idea(i)
     case 'warn':
       return warn(i)
+    case 'dm':
+      return dm(i)
     case 'timeout':
       return timeout(i)
     case 'purge':
@@ -224,6 +226,26 @@ async function warn(i: CommandInteraction) {
   }
   await modLog('⚠️ Warning', `<@${target}> was warned by <@${i.member.user.id}>\n**Reason:** ${reason}`, 0xf0ad4e)
   return { content: `Warned <@${target}> ${dm}. Logged in <#${cfg.modLogChannelId}>.` }
+}
+
+async function dm(i: CommandInteraction) {
+  // Discord already hides /dm from non-officers; check the role too in case server settings change.
+  if (!i.member.roles.includes(cfg.officerRoleId)) return { content: 'Only officers can use /dm.' }
+  const target = opt(i, 'member')!
+  const message = opt(i, 'message')!
+  if (target === i.member.user.id) return { content: "That's you! Pick someone else 📦" }
+  try {
+    const ch = await discord<{ id: string }>('POST', '/users/@me/channels', { recipient_id: target })
+    await discord('POST', `/channels/${ch.id}/messages`, {
+      content: `Hi, it's Cici from HamApps 📦. **${who(i)}** (an officer) asked me to send you this:\n\n${message}\n\n-# Reply to ${who(i)} directly or ask in #help. I can't read replies here.`,
+      allowed_mentions: { parse: [] },
+    })
+  } catch {
+    await modLog('✉️ DM not delivered', `<@${i.member.user.id}> tried to DM <@${target}> (their DMs are closed)\n**Message:** ${message}`, 0x5bc0de)
+    return { content: `Couldn't DM <@${target}>: their DMs are closed or they share no server with me. Try pinging them in a channel instead.` }
+  }
+  await modLog('✉️ DM sent', `<@${i.member.user.id}> sent <@${target}> a message through Cici\n**Message:** ${message}`, 0x5bc0de)
+  return { content: `Sent to <@${target}>. Logged in <#${cfg.modLogChannelId}>.` }
 }
 
 async function timeout(i: CommandInteraction) {
