@@ -3,7 +3,7 @@
 // "Cici is thinking…" and are finished by the Followup Lambda (src/followup.ts) calling `slow()`.
 // The list of commands Discord shows is src/commands.json (registered by scripts/register-commands.mjs).
 
-import { cfg, discord } from './shared'
+import { cfg, discord, DiscordError, params } from './shared'
 
 export interface CommandInteraction {
   type: 2
@@ -14,7 +14,10 @@ export interface CommandInteraction {
   data: {
     name: string
     options?: { name: string; value: string | number | boolean }[]
-    resolved?: { users?: Record<string, { id: string; username: string; global_name?: string }> }
+    resolved?: {
+      users?: Record<string, { id: string; username: string; global_name?: string }>
+      attachments?: Record<string, { url: string; filename: string; size: number; content_type?: string }>
+    }
   }
   member: { user: { id: string; username: string; global_name?: string }; roles: string[]; nick?: string }
 }
@@ -26,8 +29,9 @@ const who = (i: CommandInteraction) => i.member.nick || i.member.user.global_nam
 const GOLD = 0xe3c06f
 const NAVY = 0x102e64
 const reply = (data: object, ephemeral = false) => ({ type: 4, data: { allowed_mentions: { parse: [] }, ...data, ...(ephemeral ? { flags: 64 } : {}) } })
-const SLOW = new Set(['status', 'menu', 'officers', 'idea', 'warn', 'dm', 'timeout', 'purge'])
-const PRIVATE = new Set(['officers', 'idea', 'warn', 'dm', 'timeout', 'purge'])
+const FORUM_COMMANDS = ['idea', 'issue', 'request', 'ask']
+const SLOW = new Set(['status', 'menu', 'officers', ...FORUM_COMMANDS, 'warn', 'dm', 'timeout', 'purge'])
+const PRIVATE = new Set(['officers', ...FORUM_COMMANDS, 'warn', 'dm', 'timeout', 'purge'])
 
 export const LINKS = [
   ['🌐 hamapps.dev', 'https://hamapps.dev'],
@@ -41,7 +45,14 @@ export const HELP = [
   '**Everyone**',
   '`/help` this list · `/links` our apps and links · `/officers` who to ask',
   '`/status` are our apps up? · `/menu` today\'s dining menu',
-  '`/poll` quick poll · `/idea` pitch an app idea in #ideas',
+  '`/poll` quick poll',
+  '',
+  '**Post something** (Cici files it in the right place, you discuss in the thread)',
+  '`/idea` app idea or feature → 💡・ideas',
+  '`/issue` something broken → 🐛・issues',
+  '`/request` ask us to build something → 📨・requests',
+  '`/ask` a question → ❓・help',
+  '',
   '**@Cici** ask me anything about HamApps (20 a day each)',
   '🎵 join **Lofi Lounge** and I\'ll play music',
   '',
@@ -54,7 +65,7 @@ export function quick(i: CommandInteraction): { response: object; deferred: bool
   const name = i.data.name
   const verified = i.member.roles.includes(cfg.memberRoleId)
   if (!verified && !['help', 'links'].includes(name))
-    return { response: reply({ content: 'Verify first in #welcome, then I can help with that! 📦' }, true), deferred: false }
+    return { response: reply({ content: 'Verify first in ✅・verify, then I can help with that! 📦' }, true), deferred: false }
 
   if (name === 'help')
     return { response: reply({ embeds: [{ color: GOLD, title: '📦🐱 What Cici can do', description: HELP }] }, true), deferred: false }
@@ -110,7 +121,10 @@ async function run(i: CommandInteraction): Promise<object> {
     case 'officers':
       return officers()
     case 'idea':
-      return idea(i)
+    case 'issue':
+    case 'request':
+    case 'ask':
+      return forumPost(i)
     case 'warn':
       return warn(i)
     case 'dm':
@@ -194,17 +208,105 @@ async function officers() {
   }
 }
 
-// ---------- /idea ----------
-async function idea(i: CommandInteraction) {
-  const msg = await discord<{ id: string }>('POST', `/channels/${cfg.ideasChannelId}/messages`, {
-    embeds: [{ color: GOLD, title: '💡 New app idea', description: opt(i, 'idea'), footer: { text: `Pitched by ${who(i)} · vote below` } }],
-    allowed_mentions: { parse: [] },
-  })
-  for (const e of ['👍', '👎']) await discord('PUT', `/channels/${cfg.ideasChannelId}/messages/${msg.id}/reactions/${encodeURIComponent(e)}/@me`)
-  return { content: `Posted in <#${cfg.ideasChannelId}>! 💡` }
+// ---------- /idea, /issue, /request, /ask: Cici files a forum post in "➤ Submit" ----------
+// Members can't start posts in those forums themselves (only reply), so everything arrives in the same
+// shape, tagged. The person who used the command is added to the thread so they hear about replies.
+const APP_NAMES: Record<string, string> = { scheduler: 'Hamilton Scheduler', hameats: 'HamEats', homepage: 'hamapps.dev', cici: 'Cici' }
+const SHOT_MAX_BYTES = 8 * 1024 * 1024
+
+function forumMessage(i: CommandInteraction): { title: string; tag?: string; embed: Record<string, unknown>; reactions: string[]; done: string } {
+  const by = { text: `From ${who(i)}` }
+  switch (i.data.name) {
+    case 'idea': {
+      const app = opt(i, 'app')
+      const text = opt(i, 'idea')!
+      return {
+        title: `${app ? `[${APP_NAMES[app]}] ` : ''}${text}`,
+        tag: app ?? 'new',
+        embed: { color: GOLD, title: '💡 Idea', description: text, fields: app ? [{ name: 'For', value: APP_NAMES[app], inline: true }] : [], footer: { text: `${by.text} · vote with 👍 / 👎` } },
+        reactions: ['👍', '👎'],
+        done: 'Your idea is up for votes',
+      }
+    }
+    case 'issue': {
+      const app = opt(i, 'app')!
+      const steps = opt(i, 'steps')
+      return {
+        title: `[${APP_NAMES[app]}] ${opt(i, 'problem')!}`,
+        tag: app,
+        embed: { color: 0xd9534f, title: `🐛 ${APP_NAMES[app]} issue`, description: opt(i, 'problem'), fields: steps ? [{ name: 'Steps to reproduce', value: steps }] : [], footer: by },
+        reactions: ['➕'],
+        done: 'Thanks! Officers will look at your report',
+      }
+    }
+    case 'request': {
+      const from = opt(i, 'from')
+      return {
+        title: opt(i, 'title')!,
+        tag: from,
+        embed: { color: NAVY, title: `📨 ${opt(i, 'title')}`, description: opt(i, 'details'), footer: by },
+        reactions: [],
+        done: 'Your request is in. Officers will reply in the thread',
+      }
+    }
+    default: {
+      return {
+        title: opt(i, 'question')!,
+        tag: opt(i, 'topic') ?? 'other',
+        embed: { color: 0x5bc0de, title: '❓ Question', description: opt(i, 'question'), footer: { text: `${by.text} · anyone can answer below` } },
+        reactions: [],
+        done: 'Your question has its own thread',
+      }
+    }
+  }
 }
 
-// ---------- Officer tools ----------
+async function forumPost(i: CommandInteraction) {
+  const forum = cfg.forums[i.data.name]
+  const { title, tag, embed, reactions, done } = forumMessage(i)
+  const message: Record<string, unknown> = { content: `<@${i.member.user.id}>`, embeds: [embed], allowed_mentions: { users: [i.member.user.id] } }
+  const body: Record<string, unknown> = {
+    name: title.replace(/\s+/g, ' ').slice(0, 95) + (title.length > 95 ? '…' : ''),
+    applied_tags: tag && forum.tags[tag] ? [forum.tags[tag]] : [],
+    message,
+  }
+
+  // Screenshot: re-upload it, because the link Discord gives a command expires.
+  const shotId = opt(i, 'screenshot')
+  const shot = shotId ? i.data.resolved?.attachments?.[shotId] : undefined
+  let file: { name: string; blob: Blob } | undefined
+  if (shot && shot.size <= SHOT_MAX_BYTES && (shot.content_type ?? '').startsWith('image/')) {
+    const res = await fetch(shot.url, { signal: AbortSignal.timeout(8000) })
+    if (res.ok) file = { name: shot.filename.replace(/[^\w.-]/g, '_'), blob: await res.blob() }
+  }
+  if (file) {
+    embed.image = { url: `attachment://${file.name}` }
+    message.attachments = [{ id: 0, filename: file.name }]
+  }
+
+  const thread = file ? await discordForm<{ id: string }>(`/channels/${forum.id}/threads`, body, file) : await discord<{ id: string }>('POST', `/channels/${forum.id}/threads`, body)
+  // In a forum the first message has the same ID as its thread.
+  for (const e of reactions) await discord('PUT', `/channels/${thread.id}/messages/${thread.id}/reactions/${encodeURIComponent(e)}/@me`)
+  const note = shot && !file ? ' (I could only attach images under 8 MB, so the screenshot was skipped.)' : ''
+  return { content: `${done}: <#${thread.id}> ✨${note}` }
+}
+
+/** Discord REST call with one file attached (multipart). */
+async function discordForm<T>(path: string, payload: object, file: { name: string; blob: Blob }): Promise<T> {
+  const { DISCORD_MASCOT_BOT_TOKEN: token } = await params()
+  const form = new FormData()
+  form.append('payload_json', JSON.stringify(payload))
+  form.append('files[0]', file.blob, file.name)
+  const res = await fetch(`https://discord.com/api/v10${path}`, {
+    method: 'POST',
+    headers: { Authorization: `Bot ${token}`, 'User-Agent': 'DiscordBot (https://hamapps.dev, 1.0)' },
+    body: form,
+  })
+  const text = await res.text()
+  if (!res.ok) throw new DiscordError(res.status, text)
+  return JSON.parse(text) as T
+}
+
 export async function modLog(title: string, description: string, color = 0xd9534f) {
   await discord('POST', `/channels/${cfg.modLogChannelId}/messages`, {
     embeds: [{ color, title, description: description.slice(0, 4000), timestamp: new Date().toISOString() }],

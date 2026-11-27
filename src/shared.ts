@@ -40,7 +40,6 @@ export const cfg = {
   interests: JSON.parse(process.env.DISCORD_INTEREST_ROLES ?? '{}') as Record<string, { label: string; channelId: string }>,
   generalChannelId: process.env.DISCORD_GENERAL_CHANNEL_ID!,
   rolesChannelId: process.env.DISCORD_ROLES_CHANNEL_ID!,
-  introductionsChannelId: process.env.DISCORD_INTRODUCTIONS_CHANNEL_ID!,
   publicKey: process.env.DISCORD_PUBLIC_KEY!,
   googleClientId: process.env.GOOGLE_OAUTH_CLIENT_ID!,
   baseUrl: process.env.VERIFY_BASE_URL!, // https://verify.hamapps.dev
@@ -48,7 +47,8 @@ export const cfg = {
   kickAfterHours: Number(process.env.KICK_AFTER_HOURS ?? '48'),
   officerRoleId: process.env.DISCORD_OFFICER_ROLE_ID!,
   modLogChannelId: process.env.DISCORD_MODLOG_CHANNEL_ID!,
-  ideasChannelId: process.env.DISCORD_IDEAS_CHANNEL_ID!,
+  /** command name -> forum channel and its tag IDs (see DISCORD_FORUMS in sst.config.ts) */
+  forums: JSON.parse(process.env.DISCORD_FORUMS ?? '{}') as Record<string, { id: string; tags: Record<string, string> }>,
   followupFunction: process.env.FOLLOWUP_FUNCTION ?? '',
 }
 

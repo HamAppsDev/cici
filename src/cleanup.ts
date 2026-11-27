@@ -44,7 +44,7 @@ export async function handler() {
         content:
           `Hi, it's Cici from HamApps 📦🐱. You were removed from the HamApps Discord because your Hamilton ` +
           `account wasn't verified within ${cfg.kickAfterHours} hours. You're welcome back any time: ` +
-          `${cfg.joinUrl}, then click **Verify** in #welcome.`,
+          `${cfg.joinUrl}, then click **Verify** in ✅・verify.`,
       })
     } catch {
       // DMs closed; kick anyway.

@@ -11,16 +11,16 @@ Cici has two halves on AWS (us-east-2). If the always-on half goes down, verific
 | `src/verify.ts` | Lambda at https://verify.hamapps.dev | The **Verify** button, Hamilton Google sign-in, the interest menu, and all `/commands` (Discord sends every click and command here) |
 | `src/commands.ts`, `src/commands.json` | same Lambda | The `/commands`. Slow ones reply "thinking…" and are finished by the **Followup** Lambda (`src/followup.ts`) |
 | `src/cleanup.ts` | Lambda, every hour | Kicks people who joined after go-live and haven't verified in 48 hours |
-| `bot/index.mjs` | EC2 instance `cici-live` (t4g.nano, always on) | Online status, greetings, 24-hour reminder, tour DM, mod log, raid alert, @Cici AI replies (Claude), event reminders, Lofi Lounge |
+| `bot/index.mjs` | EC2 instance `cici-live` (t4g.nano, always on) | Online status, live stat channels, greetings, 24-hour reminder, tour DM, mod log, raid alert, @Cici AI replies (Claude), event reminders, Lofi Lounge |
 
 ### Verification
 
-New members join with the permanent invite (https://discord.gg/DgsvrQeJjr) and can only see #welcome until they verify:
+New members join with the permanent invite (https://discord.gg/DgsvrQeJjr) and can only see ✅・verify (formerly #welcome) and the stat channels until they verify:
 
-1. They click **Verify** in #welcome. Cici privately replies with a personal 15-minute link.
+1. They click **Verify** in ✅・verify. Cici privately replies with a personal 15-minute link.
 2. The link signs them in with Google. Only Hamilton accounts (`hd` = `hamilton.edu`) pass.
 3. They get the **Member** role, their server nickname becomes their real name, and Cici welcomes them in #general. Nothing about them is stored.
-4. In #roles, Cici's menu gives interest roles (💻 Development, 🎨 Design, 📋 Product, 📣 Marketing).
+4. In 🎭・roles, Cici's menu gives interest roles (💻 Development, 🎨 Design, 📋 Product, 📣 Marketing).
 
 People who joined **before** go-live (`/cici/DISCORD_VERIFY_GO_LIVE`) are never kicked. Delete that parameter to stop all kicks.
 

@@ -116,7 +116,7 @@ async function interactions(event: UrlEvent): Promise<UrlResult> {
   }
 
   if (i.data?.custom_id === 'interests') {
-    if (!verified) return privateReply('Verify first in #welcome, then you can pick your interests here.')
+    if (!verified) return privateReply('Verify first in ✅・verify, then you can pick your interests here.')
     const all = Object.keys(cfg.interests)
     const picked = (i.data.values ?? []).filter((v) => all.includes(v))
     const add = picked.filter((r) => !i.member!.roles.includes(r))
@@ -150,7 +150,7 @@ interface Pending {
 async function start(event: UrlEvent): Promise<UrlResult> {
   const link = await unseal<{ u: string; exp: number }>(event.queryStringParameters?.t)
   if (!link) {
-    return page(400, 'That link expired', `<p>Personal links work for ${LINK_MINUTES} minutes. Go back to <b>#welcome</b> in Discord and click <b>Verify</b> again.</p>`)
+    return page(400, 'That link expired', `<p>Personal links work for ${LINK_MINUTES} minutes. Go back to <b>✅・verify</b> in Discord and click <b>Verify</b> again.</p>`)
   }
   const p: Pending = {
     u: link.u,
@@ -197,7 +197,7 @@ async function callback(event: UrlEvent): Promise<UrlResult> {
   const p = await unseal<Pending>(cookie)
   const qs = event.queryStringParameters ?? {}
   if (!p || !qs.code || qs.state !== p.state) {
-    return page(400, 'Sign-in timed out', '<p>Go back to <b>#welcome</b> in Discord and click <b>Verify</b> again.</p>', [clear])
+    return page(400, 'Sign-in timed out', '<p>Go back to <b>✅・verify</b> in Discord and click <b>Verify</b> again.</p>', [clear])
   }
 
   // Exchange the code directly with Google over HTTPS. Per OpenID Connect, an ID token received this way
@@ -237,7 +237,7 @@ async function callback(event: UrlEvent): Promise<UrlResult> {
     throw e
   })
   if (!member) {
-    return page(404, 'Join the server first', `<p>Join the HamApps Discord from <a href="${cfg.joinUrl}">${cfg.joinUrl.replace('https://', '')}</a>, then click <b>Verify</b> in #welcome.</p>`, [clear])
+    return page(404, 'Join the server first', `<p>Join the HamApps Discord from <a href="${cfg.joinUrl}">${cfg.joinUrl.replace('https://', '')}</a>, then click <b>Verify</b> in ✅・verify.</p>`, [clear])
   }
 
   const realName = (t.name || [t.given_name, t.family_name].filter(Boolean).join(' ') || t.email!.split('@')[0]).slice(0, 32)
@@ -252,7 +252,7 @@ async function callback(event: UrlEvent): Promise<UrlResult> {
       content:
         `Welcome to HamApps, <@${p.u}>! 🎉📦\n` +
         `Pick your interests in <#${cfg.rolesChannelId}> to unlock team channels, ` +
-        `and say hi in <#${cfg.introductionsChannelId}>.`,
+        `and say hi right here: who you are, your class year, and what you'd like to build.`,
       allowed_mentions: { users: [p.u] },
     })
   }

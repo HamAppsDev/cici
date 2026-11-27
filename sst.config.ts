@@ -50,7 +50,6 @@ export default $config({
       }),
       DISCORD_GENERAL_CHANNEL_ID: '1574132642969034782',
       DISCORD_ROLES_CHANNEL_ID: '1575709072731410554',
-      DISCORD_INTRODUCTIONS_CHANNEL_ID: '1575709078947238078',
       DISCORD_PUBLIC_KEY: 'eed1350d995b63a39fcbdc4b1fc1a699337558c2a8603a0b467fea737708fa7f', // Cici's Public Key (public)
       GOOGLE_OAUTH_CLIENT_ID: '985964992339-238ra3871ci4l2l8612bk02g18d9linc.apps.googleusercontent.com', // public
       VERIFY_BASE_URL: 'https://verify.hamapps.dev',
@@ -58,7 +57,13 @@ export default $config({
       KICK_AFTER_HOURS: '48',
       DISCORD_OFFICER_ROLE_ID: '1575706929551118426',
       DISCORD_MODLOG_CHANNEL_ID: '1575763408823918672',
-      DISCORD_IDEAS_CHANNEL_ID: '1575709083015839754',
+      // Forum channels in "➤ Submit" that /idea, /issue, /request and /ask post into, with their tag IDs.
+      DISCORD_FORUMS: JSON.stringify({
+        idea: { id: '1575787389266428034', tags: { scheduler: '1575787389266428035', hameats: '1575787389266428036', homepage: '1575787389266428037', cici: '1575787389266428038', new: '1575787389266428039' } },
+        issue: { id: '1575787390788829214', tags: { scheduler: '1575787390788829215', hameats: '1575787390788829216', homepage: '1575787390788829217', cici: '1575787390788829218' } },
+        request: { id: '1575787392005185566', tags: { student: '1575787392005185567', faculty: '1575787392005185568', office: '1575787392005185569' } },
+        ask: { id: '1575787393078923278', tags: { code: '1575787393078923279', setup: '1575787393078923280', other: '1575787393078923281' } },
+      }),
     }
 
     // Finishes slow /commands in the background (Discord only waits 3 seconds for the first answer).
