@@ -261,7 +261,7 @@ async function callback(event: UrlEvent): Promise<UrlResult> {
   const app = `discord://discord.com/channels/${cfg.guildId}/${cfg.rolesChannelId}`
   const web = `https://discord.com/channels/${cfg.guildId}/${cfg.rolesChannelId}`
   return page(200, `You're in, ${esc(realName.split(' ')[0])}!`, `<p>You're verified ✅ and your server name is now <b>${esc(realName)}</b>.</p>
-    <p>Next, pick your interests in <b>#roles</b>.</p>
+    <p>Next, pick your interests in <b>🎭・roles</b>.</p>
     <p><a class="btn" href="${app}">Open Discord</a> <a class="btn ghost" href="${web}">Open in browser</a></p>`, [clear])
 }
 
