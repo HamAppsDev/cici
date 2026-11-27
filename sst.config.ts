@@ -36,6 +36,7 @@ export default $config({
         param('GOOGLE_OAUTH_CLIENT_SECRET_VERIFY'),
         param('VERIFY_LINK_SECRET'),
         param('DISCORD_VERIFY_GO_LIVE'),
+        param('EXTRA_LOGIN_DOMAINS'),
       ],
     }
     const region = 'us-east-2'

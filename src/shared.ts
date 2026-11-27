@@ -5,7 +5,8 @@
 //   /cici/DISCORD_MASCOT_BOT_TOKEN          Cici's bot token (Developer Portal > Cici > Bot > Reset Token)
 //   /cici/GOOGLE_OAUTH_CLIENT_SECRET_VERIFY Google OAuth client "HamApps Discord verify"
 //   /cici/VERIFY_LINK_SECRET                random string that signs the personal verify links and cookies
-// and one plain String:
+//   /cici/EXTRA_LOGIN_DOMAINS               optional, comma-separated Google Workspace domains that may also verify
+// and plain Strings:
 //   /cici/DISCORD_VERIFY_GO_LIVE            ISO date. Only people who join AFTER this can be kicked. Missing = never kick.
 // The GitHub App secrets (/cici/GITHUB_*) are read only by src/github.ts.
 // The local copy of every secret is ~/Documents/HamApps/shared-secrets.env on the club laptop.
@@ -24,6 +25,7 @@ export async function params(): Promise<Record<string, string>> {
     'GOOGLE_OAUTH_CLIENT_SECRET_VERIFY',
     'VERIFY_LINK_SECRET',
     'DISCORD_VERIFY_GO_LIVE',
+    'EXTRA_LOGIN_DOMAINS',
   ]
   const res = await ssm.send(
     new GetParametersCommand({ Names: names.map((n) => `/cici/${n}`), WithDecryption: true }),

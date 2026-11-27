@@ -227,7 +227,9 @@ async function callback(event: UrlEvent): Promise<UrlResult> {
   if (!genuine) throw new Error('ID token failed checks')
   // hd is only present on accounts that belong to the Hamilton Google Workspace, so a personal
   // Gmail account can't pass this even if its address ends in hamilton.edu.
-  if (t.hd !== LOGIN_DOMAIN || !t.email_verified) {
+  const { EXTRA_LOGIN_DOMAINS: extra } = await params()
+  const allowed = [LOGIN_DOMAIN, ...extra.split(',').map((d) => d.trim().toLowerCase()).filter(Boolean)]
+  if (!t.hd || !allowed.includes(t.hd.toLowerCase()) || !t.email_verified) {
     return page(403, 'That isn’t a Hamilton account', `<p>You signed in as <b>${esc(t.email ?? 'an unknown account')}</b>. Please go back to Discord, click <b>Verify</b> again and choose your <b>@hamilton.edu</b> account.</p>`, [clear])
   }
 
