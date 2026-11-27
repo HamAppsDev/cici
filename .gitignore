@@ -1,0 +1,8 @@
+node_modules
+.DS_Store
+*.log
+
+# Secrets and SST (AWS deploy tool) local state. Never commit secrets: they live in AWS Parameter Store.
+.env
+.env.*
+.sst/
