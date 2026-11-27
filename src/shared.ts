@@ -7,6 +7,7 @@
 //   /cici/VERIFY_LINK_SECRET                random string that signs the personal verify links and cookies
 // and one plain String:
 //   /cici/DISCORD_VERIFY_GO_LIVE            ISO date. Only people who join AFTER this can be kicked. Missing = never kick.
+// The GitHub App secrets (/cici/GITHUB_*) are read only by src/github.ts.
 // The local copy of every secret is ~/Documents/HamApps/shared-secrets.env on the club laptop.
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
@@ -50,6 +51,11 @@ export const cfg = {
   /** command name -> forum channel and its tag IDs (see DISCORD_FORUMS in sst.config.ts) */
   forums: JSON.parse(process.env.DISCORD_FORUMS ?? '{}') as Record<string, { id: string; tags: Record<string, string> }>,
   followupFunction: process.env.FOLLOWUP_FUNCTION ?? '',
+  // Joining the GitHub org (src/github.ts). Empty client ID = the Join GitHub button says "not switched on yet".
+  devRoleId: process.env.DISCORD_DEV_ROLE_ID!,
+  joinGithubChannelId: process.env.DISCORD_JOIN_GITHUB_CHANNEL_ID ?? '',
+  githubOrg: process.env.GITHUB_ORG ?? 'HamAppsDev',
+  githubClientId: process.env.GITHUB_APP_CLIENT_ID ?? '',
 }
 
 // ---------- Discord REST ----------

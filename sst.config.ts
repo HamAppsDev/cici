@@ -2,6 +2,7 @@
 
 // Cici, the HamApps Discord mascot bot, on AWS (us-east-2):
 //   - https://verify.hamapps.dev: Discord button clicks + Hamilton Google sign-in (src/verify.ts)
+//     + GitHub sign-in for joining the HamAppsDev org (src/github.ts)
 //   - an hourly job that kicks new joiners who didn't verify within 48 hours (src/cleanup.ts)
 //   - /commands (src/commands.ts); slow ones are finished by the Followup Lambda (src/followup.ts)
 //   - "Cici live" on one small EC2 instance (bot/): online status, greetings, mod log, AI replies, Lofi Lounge
@@ -57,6 +58,12 @@ export default $config({
       KICK_AFTER_HOURS: '48',
       DISCORD_OFFICER_ROLE_ID: '1575706929551118426',
       DISCORD_MODLOG_CHANNEL_ID: '1575763408823918672',
+      // Joining the GitHub org (src/github.ts): 🐙・join-github, the Development role, and the public client ID
+      // of the GitHub App "Cici" owned by HamAppsDev (its secrets are in Parameter Store /cici/GITHUB_*).
+      DISCORD_DEV_ROLE_ID: '1575709056142807151',
+      DISCORD_JOIN_GITHUB_CHANNEL_ID: '1575987610835361953', // 🐙・join-github
+      GITHUB_ORG: 'HamAppsDev',
+      GITHUB_APP_CLIENT_ID: 'Iv23litYDQL3O3zUdIf7', // GitHub App "HamApps Cici" (public)
       // Forum channels in "➤ Submit" that /idea, /issue, /request and /ask post into, with their tag IDs.
       DISCORD_FORUMS: JSON.stringify({
         idea: { id: '1575787389266428034', tags: { scheduler: '1575787389266428035', hameats: '1575787389266428036', homepage: '1575787389266428037', cici: '1575787389266428038', new: '1575787389266428039' } },
@@ -79,14 +86,19 @@ export default $config({
     const router = new sst.aws.Router('VerifyRouter', {
       domain: { name: 'verify.hamapps.dev', dns: sst.cloudflare.dns() },
     })
+    // Only the Verify function can read the GitHub App's secrets.
+    const readGithubParams = {
+      actions: ['ssm:GetParameters'],
+      resources: [param('GITHUB_APP_CLIENT_SECRET'), param('GITHUB_APP_PRIVATE_KEY')],
+    }
     new sst.aws.Function('Verify', {
       handler: 'src/verify.handler',
       runtime: 'nodejs22.x',
-      timeout: '10 seconds',
+      timeout: '20 seconds', // the GitHub sign-in makes several calls to GitHub and Discord in a row
       memory: '256 MB',
       url: { router: { instance: router } },
       environment: { ...env, FOLLOWUP_FUNCTION: followup.name },
-      permissions: [readParams, { actions: ['lambda:InvokeFunction'], resources: [followup.arn] }],
+      permissions: [readParams, readGithubParams, { actions: ['lambda:InvokeFunction'], resources: [followup.arn] }],
     })
     new sst.aws.CronV2('Cleanup', {
       schedule: 'rate(1 hour)',
