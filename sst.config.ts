@@ -53,7 +53,7 @@ export default $config({
       DISCORD_PUBLIC_KEY: 'eed1350d995b63a39fcbdc4b1fc1a699337558c2a8603a0b467fea737708fa7f', // Cici's Public Key (public)
       GOOGLE_OAUTH_CLIENT_ID: '985964992339-238ra3871ci4l2l8612bk02g18d9linc.apps.googleusercontent.com', // public
       VERIFY_BASE_URL: 'https://verify.hamapps.dev',
-      JOIN_URL: 'https://discord.gg/DgsvrQeJjr',
+      JOIN_URL: 'https://discord.gg/7edtbs8pua',
       KICK_AFTER_HOURS: '48',
       DISCORD_OFFICER_ROLE_ID: '1575706929551118426',
       DISCORD_MODLOG_CHANNEL_ID: '1575763408823918672',
