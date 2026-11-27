@@ -6,3 +6,7 @@ node_modules
 .env
 .env.*
 .sst/
+
+# Packed bot code (made by deploy.sh)
+.build/
+bot/node_modules

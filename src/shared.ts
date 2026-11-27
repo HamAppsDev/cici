@@ -46,6 +46,10 @@ export const cfg = {
   baseUrl: process.env.VERIFY_BASE_URL!, // https://verify.hamapps.dev
   joinUrl: process.env.JOIN_URL!, // the permanent Discord invite
   kickAfterHours: Number(process.env.KICK_AFTER_HOURS ?? '48'),
+  officerRoleId: process.env.DISCORD_OFFICER_ROLE_ID!,
+  modLogChannelId: process.env.DISCORD_MODLOG_CHANNEL_ID!,
+  ideasChannelId: process.env.DISCORD_IDEAS_CHANNEL_ID!,
+  followupFunction: process.env.FOLLOWUP_FUNCTION ?? '',
 }
 
 // ---------- Discord REST ----------

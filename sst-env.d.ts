@@ -6,6 +6,14 @@
 
 declare module "sst" {
   export interface Resource {
+    "BotCode": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "Followup": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "Verify": {
       "name": string
       "type": "sst.aws.Function"

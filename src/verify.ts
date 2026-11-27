@@ -4,6 +4,7 @@
 //                        General Information > Interactions Endpoint URL). Checked with Cici's Public Key.
 //        "verify" button     -> Cici privately sends that person a personal sign-in link (15 minutes)
 //        "interests" menu    -> adds/removes the interest roles (and so the TEAMS channels)
+//        /commands           -> src/commands.ts (slow ones finish in src/followup.ts)
 //   GET  /start?t=...    the personal link: sends the person to Google, Hamilton accounts only
 //   GET  /callback       Google sends them back here. If it's a real @hamilton.edu account:
 //                        gives the Member role, sets their server nickname to their real name,
@@ -12,7 +13,11 @@
 // Nothing about the person is stored. The Member role is the only record that they verified.
 
 import { createHash, createPublicKey, randomBytes, verify as verifySig } from 'node:crypto'
+import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda'
+import { quick, type CommandInteraction } from './commands'
 import { cfg, discord, DiscordError, params, seal, unseal } from './shared'
+
+const lambda = new LambdaClient({})
 
 const LOGIN_DOMAIN = 'hamilton.edu'
 const COOKIE = 'cici_verify'
@@ -87,6 +92,14 @@ async function interactions(event: UrlEvent): Promise<UrlResult> {
   if (!signatureOk(event, raw)) return { statusCode: 401, body: 'invalid request signature' }
   const i = JSON.parse(raw) as Interaction
   if (i.type === 1) return json({ type: 1 }) // Discord's PING when the endpoint URL is saved
+  if (i.type === 2 && i.member) {
+    const cmd = i as unknown as CommandInteraction
+    const { response, deferred } = quick(cmd)
+    // Start the Followup Lambda in the background; it edits the "thinking" reply when done.
+    if (deferred)
+      await lambda.send(new InvokeCommand({ FunctionName: cfg.followupFunction, InvocationType: 'Event', Payload: Buffer.from(raw) }))
+    return json(response)
+  }
   if (i.type !== 3 || !i.member) return privateReply('Cici only understands her buttons in the HamApps server.')
 
   const userId = i.member.user.id
