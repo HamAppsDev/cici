@@ -42,6 +42,7 @@ People who joined **before** go-live (`/cici/DISCORD_VERIFY_GO_LIVE`) are never 
 - No open ports and no SSH. For a shell: AWS Console → Systems Manager → **Session Manager** → `cici-live`.
 - Logs: `journalctl -u cici -n 100` in that shell. Restart: `sudo systemctl restart cici`.
 - Security updates install automatically every day. Node.js 24 is in `/usr/local`; the bot is in `/opt/cici/app`.
+- Bot updates (`/usr/local/bin/cici-update`, run by `./deploy.sh`) download and build in `/opt/cici/build` and delete it afterwards. Not in `/tmp`: there it's a 208 MB slice of memory, and the old script filled it up (fixed 2026-11-27; the live instance has the same script, old one saved as `cici-update.bak-2026-11-27`).
 - Cost: about $7 a month (server, disk and public IP address).
 
 ## Secrets

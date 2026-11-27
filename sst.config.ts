@@ -188,14 +188,21 @@ cd /tmp
 FILE=$(curl -fsSL https://nodejs.org/dist/latest-v24.x/SHASUMS256.txt | grep 'linux-arm64.tar.xz' | awk '{print $2}')
 curl -fsSLO https://nodejs.org/dist/latest-v24.x/$FILE
 curl -fsSL https://nodejs.org/dist/latest-v24.x/SHASUMS256.txt | grep " $FILE\$" | sha256sum -c -
-tar -xJf $FILE -C /usr/local --strip-components=1
+tar -xJf $FILE -C /usr/local --strip-components=1 && rm -f /tmp/$FILE
 useradd --system --create-home --home-dir /opt/cici cici || true
 cat > /usr/local/bin/cici-update <<'UPD'
 #!/bin/bash
+# Installs the newest bot.tgz and restarts Cici. Run by ./deploy.sh through Session Manager.
+# Downloads and caches go in /opt/cici/build on the main disk and are deleted afterwards, even if the
+# install fails. Never /tmp: on this server /tmp is a small slice of memory and fills up.
 set -euo pipefail
-aws s3 cp s3://${code.name}/bot.tgz /tmp/bot.tgz --region ${region}
-rm -rf /opt/cici/app.new && mkdir -p /opt/cici/app.new && tar -xzf /tmp/bot.tgz -C /opt/cici/app.new
-cd /opt/cici/app.new && HOME=/tmp npm ci --omit=dev --no-audit --no-fund
+B=/opt/cici/build
+trap 'rm -rf /opt/cici/build /opt/cici/app.new' EXIT
+rm -rf $B && mkdir -p $B/tmp
+export HOME=$B TMPDIR=$B/tmp npm_config_cache=$B/npm
+aws s3 cp s3://${code.name}/bot.tgz $B/bot.tgz --region ${region}
+rm -rf /opt/cici/app.new && mkdir -p /opt/cici/app.new && tar -xzf $B/bot.tgz -C /opt/cici/app.new
+cd /opt/cici/app.new && npm ci --omit=dev --no-audit --no-fund
 rm -rf /opt/cici/app.old && { [ -d /opt/cici/app ] && mv /opt/cici/app /opt/cici/app.old || true; }
 mv /opt/cici/app.new /opt/cici/app && chown -R cici:cici /opt/cici
 systemctl restart cici
