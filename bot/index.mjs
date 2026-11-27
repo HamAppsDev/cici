@@ -198,12 +198,13 @@ client.on(Events.GuildMemberUpdate, async (before, after) => {
     greetings.delete(after.id)
     after
       .send(
-        `You're verified! 🎉 Here's a quick tour of HamApps:\n` +
+        `You're verified! 🎉 Quick tour:\n` +
           `• <#${ID.roles}>: pick your interests to unlock team channels\n` +
           `• <#${ID.general}>: say hi and chat\n` +
-          `• Use \`/idea\`, \`/issue\` or \`/ask\` and I'll file it in <#${ID.ideas}>, <#${ID.issues}> or <#${ID.help}>\n` +
-          `• Our apps: https://hameats.app and https://scheduler.hamapps.dev\n` +
-          `Type \`/help\` in the server for my commands, or @ me with any question. 📦`,
+          `• <#${ID.events}>: meetings and events\n` +
+          `• Got an idea, found a bug, or need help? Use \`/idea\`, \`/issue\` or \`/ask\` and I'll post it in the right place.\n` +
+          `• Our website: https://hamapps.dev\n` +
+          `Type \`/help\` for all my commands, or @ me with any question. 📦`,
       )
       .catch(() => {})
   }
