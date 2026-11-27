@@ -22,6 +22,19 @@ New members join with the permanent invite (https://discord.gg/7edtbs8pua) and c
 3. They get the **Member** role, their server nickname becomes their real name, and Cici welcomes them in #general. Nothing about them is stored.
 4. In 🎭・roles, Cici's menu gives interest roles (💻 Development, 🎨 Design, 📋 Product, 📣 Marketing).
 
+### Joining the GitHub org
+
+Members with **💻 Development** see 🐙・join-github (in ➤ Start Here). Code: `src/github.ts`.
+
+1. They click **Join GitHub**. Cici checks they have Member and Development, then privately replies with a personal 15-minute link.
+2. The link signs them in with GitHub, so Cici learns their GitHub username without anyone typing it.
+3. Cici checks their Discord roles again, invites them to **HamAppsDev** as a plain member, and tries to accept the invite for them. If GitHub doesn't allow that, they get a button to https://github.com/orgs/HamAppsDev/invitation.
+4. The invite is logged in #mod-log, and their GitHub sign-in is thrown away. Nothing about them is stored.
+
+People already in the org (including owners) are never touched: GitHub's invite call would change their role, so Cici checks first. GitHub allows about 50 invites a day; after that Cici asks people to try tomorrow. Removing someone's Development role does **not** remove them from the org; do that on GitHub.
+
+The new-member base permission in the org is **Read**, so members can't push to any repo until they're given more.
+
 People who joined **before** go-live (`/cici/DISCORD_VERIFY_GO_LIVE`) are never kicked. Delete that parameter to stop all kicks.
 
 ### The EC2 instance
@@ -42,6 +55,8 @@ All secrets are in AWS Parameter Store (us-east-2) as encrypted SecureStrings. N
 | `/cici/VERIFY_LINK_SECRET` | Random string that signs the verify links |
 | `/cici/ANTHROPIC_API_KEY` | Claude API key for @Cici replies (console.anthropic.com) |
 | `/cici/DISCORD_VERIFY_GO_LIVE` | Go-live date (not secret) |
+| `/cici/GITHUB_APP_CLIENT_SECRET` | GitHub App "Cici" → Client secrets (only the Verify Lambda can read it) |
+| `/cici/GITHUB_APP_PRIVATE_KEY` | GitHub App "Cici" → Private keys, the whole `.pem` text (only the Verify Lambda can read it) |
 | `/cici/LOFI_STREAM_URL` | Music stream for Lofi Lounge (not secret; optional). Use only a stream you have the rights to share |
 
 Server, role and channel IDs, Cici's public key and the Google client ID are public and live in `sst.config.ts` and `bot/index.mjs`.
@@ -63,4 +78,5 @@ npm install
 
 - Discord Developer Portal → Cici → General Information → **Interactions Endpoint URL** = `https://verify.hamapps.dev/interactions`. Bot → **Server Members Intent**, **Message Content Intent** and **Presence Intent** on.
 - Google Cloud → OAuth client "HamApps Discord verify" → redirect URI `https://verify.hamapps.dev/callback`.
+- GitHub → HamAppsDev → Settings → Developer settings → GitHub Apps → **Cici**: only permission Organization → Members (read and write), installed on HamAppsDev only, callback URL `https://verify.hamapps.dev/github/callback`, webhook off. Its client ID is `GITHUB_APP_CLIENT_ID` in `sst.config.ts`.
 - Discord Server Settings → Roles: Cici must stay above Officer, Member and the interest roles.

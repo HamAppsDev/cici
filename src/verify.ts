@@ -4,40 +4,28 @@
 //                        General Information > Interactions Endpoint URL). Checked with Cici's Public Key.
 //        "verify" button     -> Cici privately sends that person a personal sign-in link (15 minutes)
 //        "interests" menu    -> adds/removes the interest roles (and so the TEAMS channels)
+//        "github" button     -> joining the HamAppsDev GitHub org (src/github.ts)
 //        /commands           -> src/commands.ts (slow ones finish in src/followup.ts)
 //   GET  /start?t=...    the personal link: sends the person to Google, Hamilton accounts only
 //   GET  /callback       Google sends them back here. If it's a real @hamilton.edu account:
 //                        gives the Member role, sets their server nickname to their real name,
 //                        and Cici welcomes them in #general.
+//   GET  /github/start, /github/callback   GitHub sign-in for joining the org (src/github.ts)
 //
 // Nothing about the person is stored. The Member role is the only record that they verified.
 
 import { createHash, createPublicKey, randomBytes, verify as verifySig } from 'node:crypto'
 import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda'
 import { quick, type CommandInteraction } from './commands'
+import { githubCallback, githubStart, joinButton } from './github'
 import { cfg, discord, DiscordError, params, seal, unseal } from './shared'
+import { esc, page, readCookie, redirect, type UrlEvent, type UrlResult } from './web'
 
 const lambda = new LambdaClient({})
 
 const LOGIN_DOMAIN = 'hamilton.edu'
 const COOKIE = 'cici_verify'
 const LINK_MINUTES = 15
-
-interface UrlEvent {
-  rawPath: string
-  body?: string
-  isBase64Encoded?: boolean
-  headers?: Record<string, string | undefined>
-  queryStringParameters?: Record<string, string | undefined>
-  cookies?: string[]
-  requestContext?: { http?: { method?: string } }
-}
-interface UrlResult {
-  statusCode: number
-  headers?: Record<string, string>
-  cookies?: string[]
-  body?: string
-}
 
 export async function handler(event: UrlEvent): Promise<UrlResult> {
   const method = event.requestContext?.http?.method ?? 'GET'
@@ -46,10 +34,13 @@ export async function handler(event: UrlEvent): Promise<UrlResult> {
     if (method === 'POST' && path === '/interactions') return await interactions(event)
     if (method === 'GET' && path === '/start') return await start(event)
     if (method === 'GET' && path === '/callback') return await callback(event)
+    if (method === 'GET' && path === '/github/start') return await githubStart(event)
+    if (method === 'GET' && path === '/github/callback') return await githubCallback(event)
     return redirect(cfg.joinUrl)
   } catch (err) {
     console.error('verify error', path, err instanceof Error ? err.message : err)
-    return page(500, 'Something went wrong', `<p>Cici tripped over a box. Please go back to Discord and click <b>Verify</b> again. If it keeps happening, ask an officer.</p>`)
+    const again = path.startsWith('/github') ? '<b>Join GitHub</b>' : '<b>Verify</b>'
+    return page(500, 'Something went wrong', `<p>Cici tripped over a box. Please go back to Discord and click ${again} again. If it keeps happening, ask an officer.</p>`)
   }
 }
 
@@ -115,6 +106,11 @@ async function interactions(event: UrlEvent): Promise<UrlResult> {
     )
   }
 
+  if (i.data?.custom_id === 'github') {
+    const { content, components } = await joinButton(userId, i.member.roles)
+    return privateReply(content, components)
+  }
+
   if (i.data?.custom_id === 'interests') {
     if (!verified) return privateReply('Verify first in ✅・verify, then you can pick your interests here.')
     const all = Object.keys(cfg.interests)
@@ -126,7 +122,11 @@ async function interactions(event: UrlEvent): Promise<UrlResult> {
       ...add.map((r) => discord('PUT', base + r, undefined, 'Picked in #roles')),
       ...remove.map((r) => discord('DELETE', base + r, undefined, 'Unpicked in #roles')),
     ])
-    const now = picked.map((r) => `${cfg.interests[r].label} → <#${cfg.interests[r].channelId}>`)
+    const now = picked.map(
+      (r) =>
+        `${cfg.interests[r].label} → <#${cfg.interests[r].channelId}>` +
+        (r === cfg.devRoleId && cfg.joinGithubChannelId ? ` and <#${cfg.joinGithubChannelId}> (join our GitHub org)` : ''),
+    )
     return privateReply(
       now.length
         ? `Saved! You'll now see:\n${now.join('\n')}\n\nWant to officially join a team? Talk to that team's lead.`
@@ -193,7 +193,7 @@ interface IdToken {
 
 async function callback(event: UrlEvent): Promise<UrlResult> {
   const clear = `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
-  const cookie = event.cookies?.map((c) => c.trim()).find((c) => c.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1)
+  const cookie = readCookie(event, COOKIE)
   const p = await unseal<Pending>(cookie)
   const qs = event.queryStringParameters ?? {}
   if (!p || !qs.code || qs.state !== p.state) {
@@ -263,24 +263,4 @@ async function callback(event: UrlEvent): Promise<UrlResult> {
   return page(200, `You're in, ${esc(realName.split(' ')[0])}!`, `<p>You're verified ✅ and your server name is now <b>${esc(realName)}</b>.</p>
     <p>Next, pick your interests in <b>🎭・roles</b>.</p>
     <p><a class="btn" href="${app}">Open Discord</a> <a class="btn ghost" href="${web}">Open in browser</a></p>`, [clear])
-}
-
-// ======================================= Pages =======================================
-
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
-const redirect = (to: string): UrlResult => ({ statusCode: 302, headers: { Location: to } })
-
-function page(status: number, title: string, html: string, cookies?: string[]): UrlResult {
-  return {
-    statusCode: status,
-    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' },
-    cookies,
-    body: `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title} · HamApps</title><link rel="icon" href="https://hamapps.dev/favicon.ico">
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#102e64;color:#f8f4ee;font:17px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:480px;padding:32px 24px;text-align:center}img{width:120px;height:120px}h1{font-size:1.8rem;margin:12px 0}
-a{color:#e3c06f}.btn{display:inline-block;margin:6px;padding:10px 18px;border-radius:999px;background:#e3c06f;color:#102e64;font-weight:700;text-decoration:none}
-.ghost{background:transparent;color:#f8f4ee;border:2px solid #f8f4ee}</style></head>
-<body><main><img src="https://hamapps.dev/hamapps-logo-white.png" alt="Cici, the HamApps mascot"><h1>${title}</h1>${html}</main></body></html>`,
-  }
 }

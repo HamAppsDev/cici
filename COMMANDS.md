@@ -43,6 +43,7 @@ Discord hides these from people without the matching permission. Everything is l
 | 5 or more joins in 2 minutes | Raid alert: pauses invites for 2 hours and pings Officers in #mod-log |
 | 24 hours without verifying | Friendly reminder DM |
 | 48 hours without verifying | Removed, with a DM containing the invite (only people who joined after go-live) |
+| **Join GitHub** in 🐙・join-github (Development role only) | Personal link → GitHub sign-in → invited to the HamAppsDev org (accepted for them when GitHub allows), logged in #mod-log |
 | Someone verifies | Member role, real-name nickname, welcome in 💬・general, tour DM, greeting in ✅・verify cleaned up |
 | A member leaves | Notice in #leadership |
 | Messages deleted or edited, kicks, bans, role changes | Logged in #mod-log |
