@@ -38,7 +38,7 @@ export const LINKS = [
   ['🍽️ HamEats', 'https://hameats.app'],
   ['📅 Hamilton Scheduler', 'https://scheduler.hamapps.dev'],
   ['💻 GitHub', 'https://github.com/HamAppsDev'],
-  ['📨 Discord invite', 'https://discord.gg/DgsvrQeJjr'],
+  ['📨 Discord invite', 'https://discord.gg/7edtbs8pua'],
 ]
 
 export const HELP = [

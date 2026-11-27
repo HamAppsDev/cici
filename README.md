@@ -15,7 +15,7 @@ Cici has two halves on AWS (us-east-2). If the always-on half goes down, verific
 
 ### Verification
 
-New members join with the permanent invite (https://discord.gg/DgsvrQeJjr) and can only see ✅・verify (formerly #welcome), 📖・rules and the stat channels until they verify:
+New members join with the permanent invite (https://discord.gg/7edtbs8pua) and can only see ✅・verify (formerly #welcome), 📖・rules and the stat channels until they verify:
 
 1. They click **Verify** in ✅・verify. Cici privately replies with a personal 15-minute link.
 2. The link signs them in with Google. Only Hamilton accounts (`hd` = `hamilton.edu`) pass.

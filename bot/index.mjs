@@ -50,7 +50,7 @@ const ID = {
   modLog: '1575763408823918672',
   lofi: '1575763409662640191',
 }
-const JOIN_URL = 'https://discord.gg/DgsvrQeJjr'
+const JOIN_URL = 'https://discord.gg/7edtbs8pua'
 const AI_DAILY_LIMIT = 20
 const RAID_JOINS = 5
 const RAID_WINDOW_MS = 2 * 60_000
