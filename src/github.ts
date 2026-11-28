@@ -40,13 +40,13 @@ async function githubSecrets() {
 }
 
 // ---------- GitHub REST ----------
-class GitHubError extends Error {
+export class GitHubError extends Error {
   constructor(public status: number, public body: string) {
     super(`GitHub ${status}: ${body.slice(0, 200)}`)
   }
 }
 
-async function gh<T = unknown>(method: string, path: string, auth: string, body?: unknown): Promise<T> {
+export async function gh<T = unknown>(method: string, path: string, auth: string, body?: unknown): Promise<T> {
   const res = await fetch(GH + path, {
     method,
     headers: {
@@ -74,7 +74,7 @@ function appJwt(privateKey: string): string {
 
 let install: { token: string; until: number } | undefined
 /** The app's token for the HamAppsDev org (lasts an hour; reused until 5 minutes before it expires). */
-async function orgToken(): Promise<string> {
+export async function orgToken(): Promise<string> {
   if (install && install.until > Date.now()) return install.token
   const jwt = `Bearer ${appJwt((await githubSecrets()).privateKey)}`
   const { id } = await gh<{ id: number }>('GET', `/orgs/${ORG()}/installation`, jwt)

@@ -75,6 +75,13 @@ export default $config({
       }),
     }
 
+    // Only Verify (joining the GitHub org) and Followup (sending /issue reports to GitHub Issues) can read
+    // the GitHub App's secrets.
+    const readGithubParams = {
+      actions: ['ssm:GetParameters'],
+      resources: [param('GITHUB_APP_CLIENT_SECRET'), param('GITHUB_APP_PRIVATE_KEY')],
+    }
+
     // Finishes slow /commands in the background (Discord only waits 3 seconds for the first answer).
     const followup = new sst.aws.Function('Followup', {
       handler: 'src/followup.handler',
@@ -82,17 +89,12 @@ export default $config({
       timeout: '30 seconds',
       memory: '256 MB',
       environment: env,
-      permissions: [readParams],
+      permissions: [readParams, readGithubParams],
     })
 
     const router = new sst.aws.Router('VerifyRouter', {
       domain: { name: 'verify.hamapps.dev', dns: sst.cloudflare.dns() },
     })
-    // Only the Verify function can read the GitHub App's secrets.
-    const readGithubParams = {
-      actions: ['ssm:GetParameters'],
-      resources: [param('GITHUB_APP_CLIENT_SECRET'), param('GITHUB_APP_PRIVATE_KEY')],
-    }
     new sst.aws.Function('Verify', {
       handler: 'src/verify.handler',
       runtime: 'nodejs22.x',

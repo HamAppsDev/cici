@@ -5,6 +5,7 @@
 //        "verify" button     -> Cici privately sends that person a personal sign-in link (15 minutes)
 //        "interests" menu    -> adds/removes the interest roles (and so the TEAMS channels)
 //        "github" button     -> joining the HamAppsDev GitHub org (src/github.ts)
+//        "Send to GitHub"     -> officers copy a /issue report to GitHub Issues (src/github-issues.ts)
 //        /commands           -> src/commands.ts (slow ones finish in src/followup.ts)
 //   GET  /start?t=...    the personal link: sends the person to Google, Hamilton accounts only
 //   GET  /callback       Google sends them back here. If it's a real @hamilton.edu account:
@@ -18,6 +19,7 @@ import { createHash, createPublicKey, randomBytes, verify as verifySig } from 'n
 import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda'
 import { quick, type CommandInteraction } from './commands'
 import { githubCallback, githubStart, joinButton } from './github'
+import { isIssueButton } from './github-issues'
 import { cfg, discord, DiscordError, params, seal, unseal } from './shared'
 import { esc, page, readCookie, redirect, type UrlEvent, type UrlResult } from './web'
 
@@ -95,6 +97,14 @@ async function interactions(event: UrlEvent): Promise<UrlResult> {
 
   const userId = i.member.user.id
   const verified = i.member.roles.includes(cfg.memberRoleId)
+
+  if (isIssueButton(i.data?.custom_id)) {
+    if (!i.member.roles.includes(cfg.officerRoleId)) return privateReply('Only officers can send reports to GitHub. 📦')
+    // Talking to GitHub can take longer than Discord's 3 seconds: say "thinking…" (privately) and let the
+    // Followup Lambda finish it.
+    await lambda.send(new InvokeCommand({ FunctionName: cfg.followupFunction, InvocationType: 'Event', Payload: Buffer.from(raw) }))
+    return json({ type: 5, data: { flags: 64 } })
+  }
 
   if (i.data?.custom_id === 'verify') {
     if (verified) return privateReply(`You're already verified ✅. Pick your interests in <#${cfg.rolesChannelId}>.`)

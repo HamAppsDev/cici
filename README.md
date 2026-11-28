@@ -22,6 +22,16 @@ New members join with the permanent invite (https://discord.gg/7edtbs8pua) and c
 3. They get the **Member** role, their server nickname becomes their real name, and Cici welcomes them in #general. Nothing about them is stored.
 4. In 🎭・roles, Cici's menu gives interest roles (💻 Development, 🎨 Design, 📋 Product, 📣 Marketing, 🤝 Community for people who just want to hang out).
 
+### Bug reports to GitHub Issues
+
+Every `/issue` post in 🐛・issues gets a **🐙 Send to GitHub (officers)** button. Code: `src/github-issues.ts`.
+
+1. An officer clicks it (anyone else is told only officers can). Cici says "thinking…" and the Followup Lambda takes over.
+2. Cici creates an issue labeled `bug` in that app's repo (Scheduler → HamiltonScheduler, HamEats → hameats, hamapps.dev → homepage, Cici → cici). It holds the problem, the steps and a link to the Discord thread. **No names**: the repos are public. Screenshots stay in Discord.
+3. The button turns into a **View on GitHub** link (so it can't be sent twice), Cici posts the link in the thread, and it's logged in #mod-log.
+
+Needs the GitHub App **HamApps Cici** to have *Repository > Issues: read and write* and access to those four repos.
+
 ### Joining the GitHub org
 
 Members with **💻 Development** see 🐙・join-github (in ➤ Start Here). Code: `src/github.ts`.
