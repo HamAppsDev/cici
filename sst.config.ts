@@ -49,6 +49,7 @@ export default $config({
         '1575709057128341555': { label: '🎨 Design', channelId: '1575709089839972534' },
         '1575709058902655108': { label: '📋 Product', channelId: '1575709092935106630' },
         '1575709059603234869': { label: '📣 Marketing', channelId: '1575709094088675441' },
+        '1576034063481966802': { label: '🤝 Community', channelId: '1574132642969034782' }, // just here to hang out -> 💬・general
       }),
       DISCORD_GENERAL_CHANNEL_ID: '1574132642969034782',
       DISCORD_ROLES_CHANNEL_ID: '1575709072731410554',
