@@ -3,6 +3,7 @@
 // "Cici is thinking…" and are finished by the Followup Lambda (src/followup.ts) calling `slow()`.
 // The list of commands Discord shows is src/commands.json (registered by scripts/register-commands.mjs).
 
+import { sendToGithubButton } from './github-issues'
 import { cfg, discord, DiscordError, params } from './shared'
 
 export interface CommandInteraction {
@@ -265,6 +266,8 @@ async function forumPost(i: CommandInteraction) {
   const forum = cfg.forums[i.data.name]
   const { title, tag, embed, reactions, done } = forumMessage(i)
   const message: Record<string, unknown> = { content: `<@${i.member.user.id}>`, embeds: [embed], allowed_mentions: { users: [i.member.user.id] } }
+  // Bug reports get a button officers use to copy them to the app's GitHub Issues (src/github-issues.ts).
+  if (i.data.name === 'issue') message.components = [sendToGithubButton(opt(i, 'app')!)]
   const body: Record<string, unknown> = {
     name: title.replace(/\s+/g, ' ').slice(0, 95) + (title.length > 95 ? '…' : ''),
     applied_tags: tag && forum.tags[tag] ? [forum.tags[tag]] : [],
