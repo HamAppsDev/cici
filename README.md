@@ -20,7 +20,7 @@ New members join with the permanent invite (https://discord.gg/7edtbs8pua) and c
 1. They click **Verify** in ✅・verify. Cici privately replies with a personal 15-minute link.
 2. The link signs them in with Google. Only Hamilton accounts (`hd` = `hamilton.edu`) pass.
 3. They get the **Member** role, their server nickname becomes their real name, and Cici welcomes them in #general. Nothing about them is stored.
-4. In 🎭・roles, Cici's menu gives interest roles (💻 Development, 🎨 Design, 📋 Product, 📣 Marketing).
+4. In 🎭・roles, Cici's menu gives interest roles (💻 Development, 🎨 Design, 📋 Product, 📣 Marketing, 🤝 Community for people who just want to hang out).
 
 ### Joining the GitHub org
 
